@@ -1,18 +1,17 @@
-# @see https://github.com/blacktop/docker-elasticsearch-alpine/blob/master/6.8/Dockerfile
+# @see https://github.com/blacktop/docker-elasticsearch-alpine/blob/master/5.6/Dockerfile
 FROM alpine:3.15.0
 
-RUN apk add --no-cache openjdk11-jre-headless bash su-exec
-
-ENV VERSION 6.8.23
+ENV VERSION 5.6.16
 ENV DOWNLOAD_URL "https://artifacts.elastic.co/downloads/elasticsearch"
-ENV ES_TARBAL "${DOWNLOAD_URL}/elasticsearch-oss-${VERSION}.tar.gz"
-ENV ES_TARBALL_ASC "${DOWNLOAD_URL}/elasticsearch-oss-${VERSION}.tar.gz.asc"
-ENV EXPECTED_SHA_URL "${DOWNLOAD_URL}/elasticsearch-oss-${VERSION}.tar.gz.sha512"
-ENV ES_TARBALL_SHA "14dbb2809b06499373c3ec5035d829d62255c2c93103618fbfe3d7d03cecf8847f654e83c78f765f23224126ff18ed713b959857e8ecf435c475b11bcd143d3f"
+ENV ES_TARBAL "${DOWNLOAD_URL}/elasticsearch-${VERSION}.tar.gz"
+ENV ES_TARBALL_ASC "${DOWNLOAD_URL}/elasticsearch-${VERSION}.tar.gz.asc"
+ENV EXPECTED_SHA_URL "${DOWNLOAD_URL}/elasticsearch-${VERSION}.tar.gz.sha512"
+ENV ES_TARBALL_SHA "cc831e50ce311366484c47cf9fead9bd6562035132e6fd29508e78776dd71846c713d8d1e7a0a99338df46cad124149fb5d767e0ae0bbbed0b50153e234f2631"
 ENV GPG_KEY "46095ACC8548582C1A2699A9D27D666CD88E42B4"
-ENV JAVA_HOME=/usr/lib/jvm/default-jvm \
-  PATH=/usr/lib/jvm/default-jvm/bin:$PATH
-#  https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-oss-6.3.0.zip
+ENV PATH /usr/share/elasticsearch/bin:$PATH
+
+RUN apk add --no-cache openjdk8-jre su-exec
+RUN apk add --no-cache bash
 RUN apk add --no-cache -t .build-deps wget ca-certificates gnupg openssl \
   && set -ex \
   && cd /tmp \
@@ -40,7 +39,6 @@ RUN apk add --no-cache -t .build-deps wget ca-certificates gnupg openssl \
   /usr/share/elasticsearch/logs \
   /usr/share/elasticsearch/config \
   /usr/share/elasticsearch/config/scripts \
-  /usr/share/elasticsearch/tmp \
   /usr/share/elasticsearch/plugins \
   ; do \
   mkdir -p "$path"; \
@@ -51,22 +49,13 @@ RUN apk add --no-cache -t .build-deps wget ca-certificates gnupg openssl \
 
 COPY config/elasticsearch.yml /usr/share/elasticsearch/config/
 COPY config/logrotate /etc/logrotate.d/elasticsearch
-COPY elastic-entrypoint.sh /
-RUN chmod +x /elastic-entrypoint.sh
-
-WORKDIR /usr/share/elasticsearch
-
-# Java VM の生成時に Unrecognized VM option 'UseAVX=2' というエラーが発生するので消しておく
-RUN sed -i '/UseAVX/d' config/jvm.options
-
-ENV PATH /usr/share/elasticsearch/bin:$PATH
-ENV ES_TMPDIR /usr/share/elasticsearch/tmp
+COPY docker-entrypoint.sh /
 
 RUN elasticsearch-plugin install analysis-kuromoji
 RUN elasticsearch-plugin install analysis-icu
 
-VOLUME ["/usr/share/elasticsearch/data"]
+WORKDIR /usr/share/elasticsearch
 
 EXPOSE 9200 9300
-ENTRYPOINT ["/elastic-entrypoint.sh"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["elasticsearch"]
