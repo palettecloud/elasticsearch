@@ -1,5 +1,5 @@
 # @see https://github.com/blacktop/docker-elasticsearch-alpine/blob/master/5.6/Dockerfile
-FROM alpine:3.15.0
+FROM alpine:3.16.3
 
 ENV VERSION 5.6.16
 ENV DOWNLOAD_URL "https://artifacts.elastic.co/downloads/elasticsearch"
