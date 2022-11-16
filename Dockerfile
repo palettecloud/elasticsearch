@@ -54,6 +54,9 @@ WORKDIR /usr/share/elasticsearch
 
 ENV PATH /usr/share/elasticsearch/bin:$PATH
 
+RUN elasticsearch-plugin install analysis-kuromoji
+RUN elasticsearch-plugin install analysis-icu
+
 VOLUME ["/usr/share/elasticsearch/data"]
 
 EXPOSE 9200 9300
