@@ -1,5 +1,6 @@
-# @see https://github.com/blacktop/docker-elasticsearch-alpine/blob/master/5.6/Dockerfile
-FROM alpine:3.16.3
+FROM alpine:3.15
+
+RUN apk add --no-cache openjdk8-jre su-exec
 
 ENV VERSION 5.6.16
 ENV DOWNLOAD_URL "https://artifacts.elastic.co/downloads/elasticsearch"
@@ -8,9 +9,7 @@ ENV ES_TARBALL_ASC "${DOWNLOAD_URL}/elasticsearch-${VERSION}.tar.gz.asc"
 ENV EXPECTED_SHA_URL "${DOWNLOAD_URL}/elasticsearch-${VERSION}.tar.gz.sha512"
 ENV ES_TARBALL_SHA "cc831e50ce311366484c47cf9fead9bd6562035132e6fd29508e78776dd71846c713d8d1e7a0a99338df46cad124149fb5d767e0ae0bbbed0b50153e234f2631"
 ENV GPG_KEY "46095ACC8548582C1A2699A9D27D666CD88E42B4"
-ENV PATH /usr/share/elasticsearch/bin:$PATH
 
-RUN apk add --no-cache openjdk8-jre su-exec
 RUN apk add --no-cache bash
 RUN apk add --no-cache -t .build-deps wget ca-certificates gnupg openssl \
   && set -ex \
@@ -47,15 +46,16 @@ RUN apk add --no-cache -t .build-deps wget ca-certificates gnupg openssl \
   && rm -rf /tmp/* \
   && apk del --purge .build-deps
 
-COPY config/elasticsearch.yml /usr/share/elasticsearch/config/
+COPY config/elastic /usr/share/elasticsearch/config
 COPY config/logrotate /etc/logrotate.d/elasticsearch
-COPY docker-entrypoint.sh /
-
-RUN elasticsearch-plugin install analysis-kuromoji
-RUN elasticsearch-plugin install analysis-icu
+COPY elastic-entrypoint.sh /
 
 WORKDIR /usr/share/elasticsearch
 
+ENV PATH /usr/share/elasticsearch/bin:$PATH
+
+VOLUME ["/usr/share/elasticsearch/data"]
+
 EXPOSE 9200 9300
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["/elastic-entrypoint.sh"]
 CMD ["elasticsearch"]
