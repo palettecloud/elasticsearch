@@ -1,5 +1,5 @@
 # @see https://github.com/blacktop/docker-elasticsearch-alpine/blob/master/6.8/Dockerfile
-FROM alpine:3.15.0
+FROM alpine:3.13.0
 
 RUN apk add --no-cache openjdk11-jre-headless bash su-exec
 
@@ -49,15 +49,12 @@ RUN apk add --no-cache -t .build-deps wget ca-certificates gnupg openssl \
   && rm -rf /tmp/* \
   && apk del --purge .build-deps
 
-COPY config/elasticsearch.yml /usr/share/elasticsearch/config/
+COPY config/elastic /usr/share/elasticsearch/config
 COPY config/logrotate /etc/logrotate.d/elasticsearch
 COPY elastic-entrypoint.sh /
 RUN chmod +x /elastic-entrypoint.sh
 
 WORKDIR /usr/share/elasticsearch
-
-# Java VM の生成時に Unrecognized VM option 'UseAVX=2' というエラーが発生するので消しておく
-RUN sed -i '/UseAVX/d' config/jvm.options
 
 ENV PATH /usr/share/elasticsearch/bin:$PATH
 ENV ES_TMPDIR /usr/share/elasticsearch/tmp
